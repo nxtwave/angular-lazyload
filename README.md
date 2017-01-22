@@ -1,17 +1,36 @@
-# angular-webpack-seed
-This is a seed project for Angular 1.5+ using Webpack and Bootstrap
+# angular-lazyload
 
-So I have built many Angular apps using Bower, and I am fairly new to Webpack. I wanted to remove Bower Components and bundle my app using Webpack into a an app bundle and a vendor bundle. Bundling Angular was fairly simple, but bundling Bootstrap was much more complex. The only examples I found were using ES6, and my apps are still on ES5. I pieced together several examples until I made it work.
+This is a seed project for Angular 1.5+ using Webpack and Bootstrap. It demonstrates 
 
-Application Stack:
+* using Angular UI Router to route to Angular 1.5 components
+* bundling the Angular application code,
+* bundling the CSS/SCSS code,
+* bundling the vendor library code,
+* running and testing the application with Webpack Dev Server
+* **Lazy Loading** of secondary feature modules
+
+## Lazy Loading
+
+Lazy loading is the main feature of this proof-of-concept. For scaling a large Angular application, we want to
+minimize the initial load size and load time and only load portions of the application as they are required
+based on user navigation. 
+
+We load the home module for the home page on application startup. When the user navigates to the contact page,
+the contact module is loaded, and when the user navigates to the about page, the about module is loaded. The 
+application is too small to measure the performance difference. However, you can monitor the loading of resources
+through the browser console.
+
+## Application Stack:
 
 * Angular 1.5+
+* Angular-UI-Router
+* ocLazyLoad
 * Javascript 5
 * Bootstrap 3.x
 * Webpack 2.x
 * Webpack-Dev-Server 2.x (for dev testing)
 
-Scripts:
+## Scripts:
 
 * build - creates the bundled JS/HTML/CSS for the application in the target directory
 * start - starts the application for dev on localhost:8000
@@ -23,12 +42,18 @@ starts from the top level source and traverses to find all the code. But with
 an Angular application, the top level source is the application module with only Angular
 specific text references to the feature modules. 
 
+For lazy loading, only the main feature module is included as a dependency for the app module. The secondary
+feature modules are loaded on demand in the route definitions. It uses a third party module called ocLazyLoader
+for registration of the lazy loaded module.
+
 ## Application Module
 
 We make these modifications to the application module:
 
+* Add require method calls to the main app module to make Webpack traverse the next levels
 * Add require method calls to the feature modules to make Webpack traverse the next levels
-of application code
+of application code, notice that only the home feature module (app.home) is loaded as a dependency.
+* Add require method calls to the components to include the view templates
 * Add require method calls for the CSS to insert the styles
 
 ```
@@ -36,38 +61,29 @@ of application code
   'use strict';
 
   angular.module('app', [
+    'ui.router',
+    'oc.lazyLoad',
+
     'app.home',
     'app.layout'
   ]);
 
   require('bootstrap/dist/css/bootstrap.css');
-  require('./app.css');
+  require('../sass/app.scss');
 
+  require('./app.routes');
   require('./home/home.module.js');
   require('./layout/layout.module.js');
-
 })();
 ```
 ## Feature Modules
 
-The main application module required the feature module. Now the feature module must require
+The main application module requires the primary feature module. Now each feature module must require
 each component and supporting script of the module.
 
-### Layout Feature Module
-
-```
-(function() {
-  'use strict';
-
-  angular
-    .module('app.layout',[]);
-
-  require('./layout.component.js');
-
-})();
-```
-
 ### Home Feature Module
+
+The home feature module requires the home component, and the home component will require the view template file.
 
 ```
 (function() {
@@ -81,58 +97,37 @@ each component and supporting script of the module.
 })();
 ```
 
-## Feature Components
+### Contact Feature Module
 
-The build is configured to load the view templates into the application javascript (app.js).
-So instead of referencing the view templates, the component "requires" the template.
-
-### Layout Feature Component
+The contact feature module requires the contact component, and the contact component will require the 
+view template file.
 
 ```
-(function() {
+(function () {
   'use strict';
 
   angular
-    .module('app.layout')
-    .component('layout', {
-      template: require('./layout.view.html'),
-      controller: LayoutController,
-      controllerAs: 'vm'
-    });
+    .module('app.contact', []);
 
-  function LayoutController() {
-    var vm = this;
+  require('./contact.component');
 
-    vm.title = 'Der Samen';
-
-  }
 })();
 ```
 
-### Home Feature Component
+### About Feature Module
+
+The about feature module requires the about component, and the about component will require the 
+view template file.
 
 ```
 (function() {
   'use strict';
 
   angular
-    .module('app.home')
-    .component('home', {
-      template: require('./home.view.html'),
-      controller: HomeController,
-      controllerAs: 'vm'
-    });
+    .module('app.about', []);
 
-  function HomeController() {
-    var vm = this;
+  require('./about.component');
 
-    vm.title = 'Home';
-
-    vm.$onInit = function() {
-      console.log('app.home.oninit');
-    };
-
-  }
 })();
 ```
 
@@ -166,6 +161,73 @@ in the src/app directory. It is copied to the output public directory by the bui
 
 ```
 
+## Application Router
+
+The application router contains each application state which routes to an application component. The home
+state maps directly to the home component as it was loaded on application startup. The contact state and the
+about state use a resolver to load the module on-demand.
+
+```
+(function() {
+  'use strict';
+
+  angular
+    .module('app')
+    .config(Config);
+
+  Config.$inject = ['$stateProvider', '$urlRouterProvider', '$ocLazyLoadProvider'];
+
+  function Config($stateProvider, $urlRouterProvider, $ocLazyLoadProvider) {
+
+    $urlRouterProvider.otherwise('/home');
+
+    $stateProvider
+
+      .state({
+        name: 'home',
+        url: '/home',
+        component: 'home'
+      })
+
+      .state({
+        name: 'about',
+        url: '/about',
+        component: 'about',
+        resolve: {
+          load: ['$q', '$ocLazyLoad', function($q, $ocLazyLoad) {
+            var deferred = $q.defer();
+            require.ensure([], function() {
+              var module = require('./about/about.module');
+              $ocLazyLoad.inject('app.about');
+              deferred.resolve();
+            });
+            return deferred.promise;
+          }]
+        }
+      })
+
+      .state({
+        name: 'contact',
+        url: '/contact',
+        component: 'contact',
+        resolve: {
+          load: ['$q', '$ocLazyLoad', function($q, $ocLazyLoad) {
+            var deferred = $q.defer();
+            require.ensure([], function() {
+              var module = require('./contact/contact.module');
+              $ocLazyLoad.inject('app.contact');
+              deferred.resolve(module);
+            });
+            return deferred.promise;
+          }]
+        }
+      });
+
+  }
+
+})();
+```
+
 ## Webpack Configuration
 
 The application is configured to use separate bundles for application specific code and
@@ -173,9 +235,13 @@ vendor library code. It also bundles the CSS and creates a separate css file.
 
 ### Entry
 
-The entry for the app bundle starts at the top of the application with application module.
-The entry for the vendor bundle sets an array of vendor library modules, including angular
-and bootstrap.
+The entry for the app bundle starts at the top of the application with application module. The
+app bundle will include the main feature bundle, but it will not include the secondary feature
+bundles to be loaded lazily.
+
+The entry for the vendor bundle sets an array of vendor library modules, including angular,
+angular router, ocLazyLoad, and bootstrap. All vendor library modules will be bundled into a single
+file vendor.js.
 
 ```
   entry: {
@@ -186,10 +252,12 @@ and bootstrap.
 
     vendor: [
       'angular',
+      'angular-ui-router',
+      'oclazyload',
       'bootstrap'
     ]
 
-  }
+  },
 ```
 
 ### Output
@@ -227,6 +295,14 @@ application bundle.
         loader: ExtractTextPlugin.extract({
           fallbackLoader: 'style-loader',
           loader: 'css-loader?sourceMap'
+        })
+      },
+
+      {
+        test: /\.scss$/,
+        loader: ExtractTextPlugin.extract({
+          fallbackLoader: 'style-loader',
+          loader: 'raw-loader!sass-loader'
         })
       },
 
@@ -276,12 +352,6 @@ public directory.
       jQuery: "jquery"
     }),
 
-    new webpack.optimize.UglifyJsPlugin({
-      compress:{
-        warnings: true
-      }
-    }),
-
     new CopyWebpackPlugin(
       [
         {
@@ -289,9 +359,9 @@ public directory.
           to: './index.html'
         }
       ],
-        {
-          copyUnmodified: true
-        }
+      {
+        copyUnmodified: true
+      }
     )
 
   ]
@@ -303,12 +373,8 @@ You can clone or fork this repository and then use it as a starting point for yo
 application by creating your own components and views. 
 
 ```
-git clone https://github.com/nxtwave/angular-webpack-seed.git
+git clone https://github.com/nxtwave/angular-lazyload.git
 
 npm install
 npm start
 ```
-
-The seed application will build, start and run on your browser. But I think you may 
-likely use this sample as a general guideline for your new or existing app. Or you 
-might just use it to fix that 'one little thing' that has you stuck.

@@ -4,11 +4,30 @@
         <h1><span class="glyphicon glyphicon-grain icon-header" aria-hidden="true"></span>&nbsp;{{::vm.title}}</h1>
     </div>
 
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-        est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque</p>
+    <form class="form" ng-submit="vm.onSubmit()">
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" ng-model="vm.contact.name">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" ng-model="vm.contact.phone">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" ng-model="vm.contact.email">
+                </div>
+            </div>
+        </div>
+        <hr/>
+
+        <button class="btn btn-default" type="button" ng-click="vm.cancel()">Cancel</button>
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
 
 </section>
-
