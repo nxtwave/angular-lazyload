@@ -13,6 +13,7 @@ module.exports = {
     vendor: [
       'angular',
       'angular-ui-router',
+      'oclazyload',
       'bootstrap'
     ]
 

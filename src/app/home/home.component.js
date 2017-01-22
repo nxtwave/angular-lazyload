@@ -12,7 +12,7 @@
   function HomeController() {
     var vm = this;
 
-    vm.title = 'My Home';
+    vm.title = 'Home';
 
     vm.$onInit = function() {
       console.log('app.home.oninit');

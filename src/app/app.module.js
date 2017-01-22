@@ -3,10 +3,9 @@
 
   angular.module('app', [
     'ui.router',
+    'oc.lazyLoad',
 
     'app.home',
-    'app.contact',
-    'app.about',
 
     'app.layout'
   ]);
@@ -17,8 +16,6 @@
   require('./app.routes');
 
   require('./home/home.module.js');
-  require('./contact/contact.module.js');
-  require('./about/about.module.js');
 
   require('./layout/layout.module.js');
 
