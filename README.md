@@ -7,24 +7,11 @@ This is a seed project for Angular 1.5+ using Webpack and Bootstrap. It demonstr
 * bundling the CSS/SCSS code,
 * bundling the vendor library code,
 * running and testing the application with Webpack Dev Server
-* **Lazy Loading** of secondary feature modules
-
-## Lazy Loading
-
-Lazy loading is the main feature of this proof-of-concept. For scaling a large Angular application, we want to
-minimize the initial load size and load time and only load portions of the application as they are required
-based on user navigation. 
-
-We load the home module for the home page on application startup. When the user navigates to the contact page,
-the contact module is loaded, and when the user navigates to the about page, the about module is loaded. The 
-application is too small to measure the performance difference. However, you can monitor the loading of resources
-through the browser console.
 
 ## Application Stack:
 
 * Angular 1.5+
 * Angular-UI-Router
-* ocLazyLoad
 * Javascript 5
 * Bootstrap 3.x
 * Webpack 2.x
@@ -42,10 +29,6 @@ starts from the top level source and traverses to find all the code. But with
 an Angular application, the top level source is the application module with only Angular
 specific text references to the feature modules. 
 
-For lazy loading, only the main feature module is included as a dependency for the app module. The secondary
-feature modules are loaded on demand in the route definitions. It uses a third party module called ocLazyLoader
-for registration of the lazy loaded module.
-
 ## Application Module
 
 We make these modifications to the application module:
@@ -62,9 +45,11 @@ of application code, notice that only the home feature module (app.home) is load
 
   angular.module('app', [
     'ui.router',
-    'oc.lazyLoad',
 
     'app.home',
+    'app.contact',
+    'app.about',
+
     'app.layout'
   ]);
 
@@ -72,9 +57,15 @@ of application code, notice that only the home feature module (app.home) is load
   require('../sass/app.scss');
 
   require('./app.routes');
+
   require('./home/home.module.js');
+  require('./contact/contact.module.js');
+  require('./about/about.module.js');
+
   require('./layout/layout.module.js');
+
 })();
+
 ```
 ## Feature Modules
 
@@ -163,9 +154,7 @@ in the src/app directory. It is copied to the output public directory by the bui
 
 ## Application Router
 
-The application router contains each application state which routes to an application component. The home
-state maps directly to the home component as it was loaded on application startup. The contact state and the
-about state use a resolver to load the module on-demand.
+The application router contains each application state which routes to an application component. 
 
 ```
 (function() {
@@ -175,9 +164,9 @@ about state use a resolver to load the module on-demand.
     .module('app')
     .config(Config);
 
-  Config.$inject = ['$stateProvider', '$urlRouterProvider', '$ocLazyLoadProvider'];
+  Config.$inject = ['$stateProvider', '$urlRouterProvider'];
 
-  function Config($stateProvider, $urlRouterProvider, $ocLazyLoadProvider) {
+  function Config($stateProvider, $urlRouterProvider) {
 
     $urlRouterProvider.otherwise('/home');
 
@@ -192,35 +181,13 @@ about state use a resolver to load the module on-demand.
       .state({
         name: 'about',
         url: '/about',
-        component: 'about',
-        resolve: {
-          load: ['$q', '$ocLazyLoad', function($q, $ocLazyLoad) {
-            var deferred = $q.defer();
-            require.ensure([], function() {
-              var module = require('./about/about.module');
-              $ocLazyLoad.inject('app.about');
-              deferred.resolve();
-            });
-            return deferred.promise;
-          }]
-        }
+        component: 'about'
       })
 
       .state({
         name: 'contact',
         url: '/contact',
-        component: 'contact',
-        resolve: {
-          load: ['$q', '$ocLazyLoad', function($q, $ocLazyLoad) {
-            var deferred = $q.defer();
-            require.ensure([], function() {
-              var module = require('./contact/contact.module');
-              $ocLazyLoad.inject('app.contact');
-              deferred.resolve(module);
-            });
-            return deferred.promise;
-          }]
-        }
+        component: 'contact'
       });
 
   }
@@ -236,8 +203,7 @@ vendor library code. It also bundles the CSS and creates a separate css file.
 ### Entry
 
 The entry for the app bundle starts at the top of the application with application module. The
-app bundle will include the main feature bundle, but it will not include the secondary feature
-bundles to be loaded lazily.
+app bundle will include all application code.
 
 The entry for the vendor bundle sets an array of vendor library modules, including angular,
 angular router, ocLazyLoad, and bootstrap. All vendor library modules will be bundled into a single
@@ -253,7 +219,6 @@ file vendor.js.
     vendor: [
       'angular',
       'angular-ui-router',
-      'oclazyload',
       'bootstrap'
     ]
 
