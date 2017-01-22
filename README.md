@@ -376,6 +376,7 @@ application by creating your own components and views.
 git clone https://github.com/nxtwave/angular-lazyload.git
 
 npm install
+npm run build
 npm start
 ```
 
