@@ -18,7 +18,7 @@ based on user navigation.
 We load the home module for the home page on application startup. When the user navigates to the contact page,
 the contact module is loaded, and when the user navigates to the about page, the about module is loaded.
 
-Application Stack:
+## Application Stack:
 
 * Angular 1.5+
 * Angular-UI-Router
@@ -28,7 +28,7 @@ Application Stack:
 * Webpack 2.x
 * Webpack-Dev-Server 2.x (for dev testing)
 
-Scripts:
+## Scripts:
 
 * build - creates the bundled JS/HTML/CSS for the application in the target directory
 * start - starts the application for dev on localhost:8000
@@ -48,8 +48,10 @@ for registration of the lazy loaded module.
 
 We make these modifications to the application module:
 
+* Add require method calls to the main app module to make Webpack traverse the next levels
 * Add require method calls to the feature modules to make Webpack traverse the next levels
 of application code, notice that only the home feature module (app.home) is loaded as a dependency.
+* Add require method calls to the components to include the view templates
 * Add require method calls for the CSS to insert the styles
 
 ```
@@ -74,7 +76,7 @@ of application code, notice that only the home feature module (app.home) is load
 ```
 ## Feature Modules
 
-The main application module requires the primary feature module. Now the feature module must require
+The main application module requires the primary feature module. Now each feature module must require
 each component and supporting script of the module.
 
 ### Home Feature Module
