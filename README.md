@@ -16,7 +16,9 @@ minimize the initial load size and load time and only load portions of the appli
 based on user navigation. 
 
 We load the home module for the home page on application startup. When the user navigates to the contact page,
-the contact module is loaded, and when the user navigates to the about page, the about module is loaded.
+the contact module is loaded, and when the user navigates to the about page, the about module is loaded. The 
+application is too small to measure the performance difference. However, you can monitor the loading of resources
+through the browser console.
 
 ## Application Stack:
 
