@@ -6,7 +6,6 @@
     'oc.lazyLoad',
 
     'app.home',
-
     'app.layout'
   ]);
 
@@ -14,10 +13,7 @@
   require('../sass/app.scss');
 
   require('./app.routes');
-
   require('./home/home.module.js');
-
   require('./layout/layout.module.js');
-
 })();
 
